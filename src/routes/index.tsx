@@ -40,20 +40,20 @@ function Home() {
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-border bg-white">
         <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:py-24">
-          <div>
+        <div className="relative mx-auto max-w-4xl px-5 py-20 text-center sm:px-8 lg:py-28">
+          <div className="mx-auto max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-tint px-3 py-1.5 text-xs font-bold text-brand-strong">
               <Sparkles className="h-3.5 w-3.5" />
               AI Talent Intelligence
             </span>
-            <h1 className="mt-5 text-[34px] leading-[1.08] font-extrabold sm:text-[52px]">
+            <h1 className="mt-5 text-[34px] leading-[1.08] font-extrabold sm:text-[56px]">
               Your Career, Powered by Intelligence.
             </h1>
-            <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-body">
+            <p className="mx-auto mt-5 max-w-2xl text-[16px] leading-relaxed text-body">
               Discover the right opportunities, understand your skills, build your career and get hired
               with AI-powered talent intelligence.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg">
                 <Link to="/jobs">Find Jobs</Link>
               </Button>
@@ -61,7 +61,7 @@ function Home() {
                 <Link to="/career-advisor">Explore AI Career Advisor</Link>
               </Button>
             </div>
-            <dl className="mt-10 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">
+            <dl className="mx-auto mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">
               {[
                 ["48K+", "Live roles"],
                 ["1,200+", "Hiring teams"],
@@ -75,63 +75,6 @@ function Home() {
             </dl>
           </div>
 
-          {/* Candidate → Skills → AI → Opportunities visual */}
-          <div className="relative">
-            <div className="panel p-5">
-              <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-navy text-sm font-bold text-white">
-                  AM
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-heading">Aarav Mehta</p>
-                  <p className="text-xs text-body">Backend Developer · Bengaluru</p>
-                </div>
-                <span className="ml-auto shrink-0">
-                  <StatusBadge tone="navy">Profile 78%</StatusBadge>
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Java", "Spring Boot", "SQL", "React"].map((s) => (
-                  <span key={s} className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-navy">
-                    {s}
-                  </span>
-                ))}
-              </div>
-
-              <div className="my-5 flex items-center gap-3">
-                <span className="h-px flex-1 bg-border" />
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-tint px-3 py-1 text-[11px] font-bold text-brand-strong">
-                  <Sparkles className="h-3 w-3" /> AI TALENT ENGINE
-                </span>
-                <span className="h-px flex-1 bg-border" />
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { role: "Java Microservices Developer", org: "Vertex Financial", m: 88 },
-                  { role: "Backend Engineer", org: "Northwind Systems", m: 82 },
-                ].map((j) => (
-                  <div key={j.role} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                    <MatchRing value={j.m} size={44} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-heading">{j.role}</p>
-                      <p className="truncate text-xs text-body">{j.org}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="panel mt-4 border-brand/25 bg-tint/50 p-4 lg:absolute lg:-right-6 lg:-bottom-10 lg:mt-0 lg:w-72">
-              <p className="text-[11px] font-bold tracking-wide text-brand-strong uppercase">
-                Next best action
-              </p>
-              <p className="mt-2 text-sm text-navy">
-                Learn <strong>Kubernetes</strong> to unlock 14 more high-match roles.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
