@@ -4,18 +4,21 @@ import { cn } from "@/lib/utils";
 
 export function Logo({ tone = "navy", className }: { tone?: "navy" | "light"; className?: string }) {
   return (
-    <Link to="/" className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className="relative grid h-8 w-8 place-items-center rounded-lg bg-brand">
-        <span className="absolute h-3 w-3 rounded-sm bg-white/95" />
-        <span className="absolute right-1 bottom-1 h-1.5 w-1.5 rounded-full bg-navy" />
+    <Link to="/" className={cn("inline-flex items-center gap-2.5", className)} aria-label="TRILINK home">
+      <span className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-navy text-[19px] font-black italic tracking-tighter text-white">
+        <span className="relative z-10 -mr-1">T</span>
+        <span className="absolute z-10 translate-x-1 text-brand">L</span>
+        <span className="absolute h-[142%] w-[54%] rotate-45 rounded-full border-2 border-white/90" />
+        <span className="absolute top-1 right-0.5 h-1.5 w-1.5 rounded-full bg-brand" />
       </span>
-      <span
-        className={cn(
-          "font-display text-[15px] font-extrabold tracking-tight",
-          tone === "light" ? "text-white" : "text-navy",
-        )}
-      >
-        LT SUPERCOM
+      <span className="leading-none">
+        <span className="font-display text-[18px] font-extrabold tracking-tight">
+          <span className={tone === "light" ? "text-white" : "text-navy"}>TRI</span>
+          <span className="text-brand">LINK</span>
+        </span>
+        <span className={cn("mt-1 hidden text-[7px] font-bold tracking-[0.18em] uppercase sm:block", tone === "light" ? "text-white/75" : "text-navy/65")}>
+          Connect · Build · Grow
+        </span>
       </span>
     </Link>
   );

@@ -61,15 +61,15 @@ function Home() {
                 <Link to="/career-advisor">Explore AI Career Advisor</Link>
               </Button>
             </div>
-            <dl className="mx-auto mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">
+            <dl className="mx-auto mt-12 grid max-w-2xl grid-cols-1 gap-5 border-t border-border pt-6 text-left sm:grid-cols-3">
               {[
-                ["48K+", "Live roles"],
-                ["1,200+", "Hiring teams"],
-                ["320+", "Campus partners"],
-              ].map(([v, l]) => (
-                <div key={l}>
-                  <dt className="font-display text-xl font-extrabold text-brand-strong">{v}</dt>
-                  <dd className="mt-1 text-xs text-body">{l}</dd>
+                ["Better-fit roles", "Discover opportunities aligned with your skills and goals."],
+                ["Clear skill guidance", "Know what to build next for the role you want."],
+                ["One focused plan", "Turn career goals into practical next steps."],
+              ].map(([title, description]) => (
+                <div key={title}>
+                  <dt className="text-sm font-bold text-heading">{title}</dt>
+                  <dd className="mt-1 text-xs leading-relaxed text-body">{description}</dd>
                 </div>
               ))}
             </dl>
