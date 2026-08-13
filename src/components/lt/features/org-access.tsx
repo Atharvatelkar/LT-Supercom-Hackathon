@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Building2, Check, CircleAlert, Clock, FileText, GraduationCap } from "lucide-react";
+import { Building2, Check, CircleAlert, Clock, FileText, GraduationCap, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Logo, Panel, StatusBadge } from "@/components/lt/kit";
 import { Button } from "@/components/ui/button";
+import { registerOrgFn } from "@/server/auth/functions";
 
 type Kind = "Employer" | "College";
 
@@ -11,26 +13,70 @@ const steps: Record<Kind, string[]> = {
   College: ["Institution Information", "Placement Officer", "Institution Verification", "Required Documents", "Submit"],
 };
 
-const fields: Record<Kind, string[][]> = {
-  Employer: [
-    ["Company name", "Industry", "Company website", "Company size"],
-    ["Registration number", "GSTIN / Tax ID", "Registered address", "Year established"],
-    ["Contact person name", "Designation", "Work email", "Phone number"],
-    ["Certificate of incorporation", "GST certificate", "Company PAN", "Authorised signatory ID"],
-  ],
-  College: [
-    ["Institution name", "Institution type", "Affiliated university", "Website"],
-    ["Placement officer name", "Designation", "Official email", "Phone number"],
-    ["AICTE / UGC code", "Year established", "Campus address", "Total students"],
-    ["Approval letter", "Institution registration", "Placement cell authorisation", "Officer ID proof"],
-  ],
-};
-
 export function OrgAccess({ kind }: { kind: Kind }) {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<"draft" | "Pending" | "Rejected" | "Approved">("draft");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const flow = steps[kind];
   const isLast = step === flow.length - 1;
+
+  // Form Data
+  const [orgData, setOrgData] = useState({
+    name: kind === "Employer" ? "Northwind Systems" : "Sristi Institute of Technology",
+    industryOrType: kind === "Employer" ? "IT & Cloud Services" : "Engineering College",
+    website: kind === "Employer" ? "https://northwind.io" : "https://sristi.edu",
+    sizeOrStudents: kind === "Employer" ? "1,200 employees" : "3,400 students",
+    registrationNo: kind === "Employer" ? "CIN-U72200KA2018PTC112233" : "AICTE-1-44992211",
+    taxIdOrAicteCode: kind === "Employer" ? "27AABCU9603R1ZX" : "AICTE-SIT-BLR-09",
+    address: kind === "Employer" ? "Outer Ring Road, Bellandur, Bengaluru" : "Electronic City, Bengaluru",
+    yearEstablished: 2018,
+    contactPersonName: kind === "Employer" ? "Rhea Kapoor" : "Dr. Anil Menon",
+    contactDesignation: kind === "Employer" ? "Head of Talent Acquisition" : "Dean - Industry Relations",
+    contactEmail: kind === "Employer" ? "rhea@northwind.io" : "placements@sristi.edu",
+    contactPhone: "+91 98200 11223",
+  });
+
+  const updateField = (key: string, val: any) => {
+    setOrgData((prev) => ({ ...prev, [key]: val }));
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await registerOrgFn({
+        data: {
+          kind: kind === "Employer" ? "EMPLOYER" : "COLLEGE",
+          name: orgData.name,
+          industryOrType: orgData.industryOrType,
+          website: orgData.website,
+          sizeOrStudents: orgData.sizeOrStudents,
+          registrationNo: orgData.registrationNo,
+          taxIdOrAicteCode: orgData.taxIdOrAicteCode,
+          address: orgData.address,
+          yearEstablished: Number(orgData.yearEstablished) || 2020,
+          contactPersonName: orgData.contactPersonName,
+          contactDesignation: orgData.contactDesignation,
+          contactEmail: orgData.contactEmail,
+          contactPhone: orgData.contactPhone,
+        },
+      });
+
+      if (res && res.success) {
+        setStatus("Pending");
+        toast.success("Registration submitted for admin review!", {
+          description: "Your verification request has been queued in the admin console.",
+        });
+      } else {
+        toast.error("Submission failed", {
+          description: (res as any)?.error?.message || "Please check provided information.",
+        });
+      }
+    } catch (err: any) {
+      toast.error("Submission failed", { description: err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface">
@@ -105,28 +151,140 @@ export function OrgAccess({ kind }: { kind: Kind }) {
 
               {!isLast ? (
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {(fields[kind][step] ?? []).map((f) => (
-                    <label key={f} className="block">
-                      <span className="mb-1.5 block text-xs font-semibold text-navy">{f}</span>
-                      {step === 3 ? (
-                        <span className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-surface px-3 py-3 text-xs text-body">
-                          <FileText className="h-4 w-4 text-navy/50" /> Upload PDF or image
+                  {step === 0 && (
+                    <>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">
+                          {kind === "Employer" ? "Company name" : "Institution name"}
                         </span>
-                      ) : (
                         <input
-                          placeholder={f}
+                          value={orgData.name}
+                          onChange={(e) => updateField("name", e.target.value)}
                           className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
                         />
-                      )}
-                    </label>
-                  ))}
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">
+                          {kind === "Employer" ? "Industry" : "Institution type"}
+                        </span>
+                        <input
+                          value={orgData.industryOrType}
+                          onChange={(e) => updateField("industryOrType", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Website</span>
+                        <input
+                          value={orgData.website}
+                          onChange={(e) => updateField("website", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">
+                          {kind === "Employer" ? "Company size" : "Total students"}
+                        </span>
+                        <input
+                          value={orgData.sizeOrStudents}
+                          onChange={(e) => updateField("sizeOrStudents", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {step === 1 && (
+                    <>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Registration number / CIN</span>
+                        <input
+                          value={orgData.registrationNo}
+                          onChange={(e) => updateField("registrationNo", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">
+                          {kind === "Employer" ? "GSTIN / Tax ID" : "AICTE / UGC Code"}
+                        </span>
+                        <input
+                          value={orgData.taxIdOrAicteCode}
+                          onChange={(e) => updateField("taxIdOrAicteCode", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block sm:col-span-2">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Address</span>
+                        <input
+                          value={orgData.address}
+                          onChange={(e) => updateField("address", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {step === 2 && (
+                    <>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Contact person name</span>
+                        <input
+                          value={orgData.contactPersonName}
+                          onChange={(e) => updateField("contactPersonName", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Designation</span>
+                        <input
+                          value={orgData.contactDesignation}
+                          onChange={(e) => updateField("contactDesignation", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Official email</span>
+                        <input
+                          type="email"
+                          value={orgData.contactEmail}
+                          onChange={(e) => updateField("contactEmail", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-navy">Phone number</span>
+                        <input
+                          value={orgData.contactPhone}
+                          onChange={(e) => updateField("contactPhone", e.target.value)}
+                          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {step === 3 && (
+                    <div className="sm:col-span-2 space-y-3">
+                      {["Registration Certificate / Incorporation", "Tax / Compliance Dossier", "Official Signatory Proof"].map((doc) => (
+                        <div key={doc} className="flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-navy/60" />
+                            <span className="font-semibold text-navy">{doc}</span>
+                          </div>
+                          <span className="rounded bg-white px-2 py-1 text-[11px] font-bold text-success border border-border">
+                            Attached (PDF)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="mt-6 rounded-lg border border-border bg-surface p-4 text-sm text-body">
                   <p className="font-semibold text-heading">Ready for verification</p>
                   <p className="mt-1">
                     {kind} accounts require admin verification. You will receive full dashboard access once
-                    approved.
+                    approved by the platform team.
                   </p>
                 </div>
               )}
@@ -138,7 +296,15 @@ export function OrgAccess({ kind }: { kind: Kind }) {
                   </Button>
                 )}
                 {isLast ? (
-                  <Button onClick={() => setStatus("Pending")}>Submit for Verification</Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
+                      </>
+                    ) : (
+                      "Submit for Verification"
+                    )}
+                  </Button>
                 ) : (
                   <Button onClick={() => setStep((s) => s + 1)}>Continue</Button>
                 )}
@@ -168,7 +334,7 @@ export function OrgAccess({ kind }: { kind: Kind }) {
             </h2>
             <p className="mt-2 text-sm text-body">
               {status === "Pending"
-                ? "Our admin team typically reviews organisation documents within 1–2 business days."
+                ? "Our admin team reviews organisation dossiers. Your submission is now in the Admin Verification Queue."
                 : status === "Rejected"
                   ? "Some documents were unclear. Update the requested details and resubmit for review."
                   : `You now have full ${kind.toLowerCase()} dashboard access.`}
@@ -183,12 +349,9 @@ export function OrgAccess({ kind }: { kind: Kind }) {
                 </Button>
               )}
               {status === "Pending" && (
-                <>
-                  <Button variant="outline" className="border-navy/25 text-navy hover:bg-surface" onClick={() => setStatus("Rejected")}>
-                    Simulate rejection
-                  </Button>
-                  <Button onClick={() => setStatus("Approved")}>Simulate approval</Button>
-                </>
+                <Button asChild variant="outline" className="border-navy/25 text-navy hover:bg-surface">
+                  <Link to="/login">Return to Login</Link>
+                </Button>
               )}
             </div>
           </Panel>

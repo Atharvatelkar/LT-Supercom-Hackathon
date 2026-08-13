@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Logo, Panel } from "@/components/lt/kit";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -19,8 +20,37 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const [mode, setMode] = useState<"Password" | "OTP">("Password");
-  const { signIn } = useAuth();
+  const [email, setEmail] = useState("aarav@mail.com");
+  const [password, setPassword] = useState("password123");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signIn, loginWithCredentials } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const result = await loginWithCredentials(email, password);
+      if (result.success) {
+        toast.success("Signed in successfully");
+        if (email.includes("northwind") || email.includes("arclight")) {
+          navigate({ to: "/app/employer" });
+        } else if (email.includes("sristi") || email.includes("meridian")) {
+          navigate({ to: "/app/college" });
+        } else if (email.includes("admin")) {
+          navigate({ to: "/admin" });
+        } else {
+          navigate({ to: "/app" });
+        }
+      } else {
+        toast.error("Login failed", { description: result.error || "Please check your email and password." });
+      }
+    } catch {
+      toast.error("An error occurred while signing in.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
@@ -35,7 +65,7 @@ function LoginPage() {
             Talent Engine.
           </p>
         </div>
-        <p className="text-xs text-white/40">Prototype interface · mock authentication</p>
+        <p className="text-xs text-white/40">Secure Session Authentication · Drizzle ORM & Postgres</p>
       </div>
 
       <div className="flex items-center justify-center bg-white px-5 py-12 sm:px-8">
@@ -46,18 +76,14 @@ function LoginPage() {
           <h1 className="mt-8 text-2xl font-extrabold lg:mt-0">Welcome Back</h1>
           <p className="mt-2 text-sm text-body">Sign in to continue to LT Supercom.</p>
 
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              signIn("candidate");
-              navigate({ to: "/app" });
-            }}
-          >
+          <form className="mt-8 space-y-4" onSubmit={handleLogin}>
             <label className="block">
               <span className="mb-1.5 block text-xs font-semibold text-navy">Email / Mobile Number</span>
               <input
-                defaultValue="aarav@mail.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
               />
             </label>
@@ -83,14 +109,22 @@ function LoginPage() {
               </span>
               <input
                 type={mode === "Password" ? "password" : "text"}
-                defaultValue={mode === "Password" ? "supercom" : ""}
-                placeholder={mode === "OTP" ? "6-digit code" : ""}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "OTP" ? "6-digit code" : "Enter password"}
+                required
                 className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
               />
             </label>
 
-            <Button type="submit" className="w-full" size="lg">
-              Login
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
           </form>
 
@@ -116,7 +150,7 @@ function LoginPage() {
           </div>
 
           <Panel className="mt-6 bg-surface p-3">
-            <p className="text-[11px] font-semibold text-navy">Prototype role switch</p>
+            <p className="text-[11px] font-semibold text-navy">Quick Role Switch (Demo Mode)</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {([
                 ["Candidate", "/app"],
@@ -124,14 +158,18 @@ function LoginPage() {
                 ["College", "/app/college"],
                 ["Admin", "/admin"],
               ] as const).map(([label, to]) => (
-                <Link
+                <button
                   key={label}
-                  to={to}
-                  onClick={() => signIn(label.toLowerCase() as "candidate")}
+                  type="button"
+                  onClick={async () => {
+                    await signIn(label.toLowerCase() as "candidate");
+                    toast.success(`Signed in as ${label}`);
+                    navigate({ to });
+                  }}
                   className="rounded-md border border-border bg-white px-2.5 py-1 text-[11px] font-semibold text-body hover:text-navy"
                 >
                   {label}
-                </Link>
+                </button>
               ))}
             </div>
           </Panel>
