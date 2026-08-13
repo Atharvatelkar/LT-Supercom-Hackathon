@@ -297,7 +297,7 @@ function AIAssistantModal({
     setIsSending(true);
 
     try {
-      const { askAIAssistantFn } = await import("@/server/ai/functions");
+      const { askAIAssistantFn } = await import("@/api/ai");
       const res = await askAIAssistantFn({
         data: {
           message: userMsg,

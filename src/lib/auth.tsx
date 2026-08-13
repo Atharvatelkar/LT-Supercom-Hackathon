@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Role } from "./mock-data";
-import { getSessionFn, loginFn, logoutFn } from "@/server/auth/functions";
+import { getSessionFn, loginFn, logoutFn } from "@/api/auth";
 
 export type Session = {
   role: Role;

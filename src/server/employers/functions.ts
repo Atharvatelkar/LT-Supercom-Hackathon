@@ -6,10 +6,14 @@ import {
   createJob,
   getEmployerATSPipeline,
   updateATSStage,
+  getEmployerInterviews,
+  scheduleInterview,
+  getEmployerOffers,
+  createOffer,
 } from "./service";
 import { validateSessionToken, SESSION_COOKIE_NAME } from "../auth/session";
 import { requireEmployer } from "../auth/rbac";
-import { JobCreateSchema, ATSStageUpdateSchema } from "../shared/validation";
+import { JobCreateSchema, ATSStageUpdateSchema, ScheduleInterviewSchema, CreateOfferSchema } from "../shared/validation";
 import { formatErrorResponse } from "../shared/errors";
 import { store } from "../db/store";
 
@@ -67,6 +71,50 @@ export const updateATSStageFn = createServerFn({ method: "POST" })
     try {
       const auth = await getEmployerAuth();
       const result = await updateATSStage(auth.organization.id, auth.user.id, data);
+      return { success: true, data: result };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const getEmployerInterviewsFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const auth = await getEmployerAuth();
+    const interviews = await getEmployerInterviews(auth.organization.id);
+    return { success: true, data: interviews };
+  } catch (error) {
+    return formatErrorResponse(error);
+  }
+});
+
+export const scheduleInterviewFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => ScheduleInterviewSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getEmployerAuth();
+      const result = await scheduleInterview(auth.organization.id, auth.user.id, data);
+      return { success: true, data: result };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const getEmployerOffersFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const auth = await getEmployerAuth();
+    const offers = await getEmployerOffers(auth.organization.id);
+    return { success: true, data: offers };
+  } catch (error) {
+    return formatErrorResponse(error);
+  }
+});
+
+export const createOfferFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => CreateOfferSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getEmployerAuth();
+      const result = await createOffer(auth.organization.id, auth.user.id, data);
       return { success: true, data: result };
     } catch (error) {
       return formatErrorResponse(error);

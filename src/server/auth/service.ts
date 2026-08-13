@@ -83,7 +83,7 @@ export async function signup(input: z.infer<typeof SignupSchema>) {
       verificationStatus: "PENDING",
       contactPersonName: parsed.name,
       contactEmail: parsed.email,
-      contactPhone: parsed.phone,
+      contactPhone: parsed.phone || null,
       createdByUserId: userId,
       createdAt: now,
       updatedAt: now,

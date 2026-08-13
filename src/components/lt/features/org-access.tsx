@@ -4,7 +4,7 @@ import { Building2, Check, CircleAlert, Clock, FileText, GraduationCap, Loader2 
 import { toast } from "sonner";
 import { Logo, Panel, StatusBadge } from "@/components/lt/kit";
 import { Button } from "@/components/ui/button";
-import { registerOrgFn } from "@/server/auth/functions";
+import { registerOrgFn } from "@/api/auth";
 
 type Kind = "Employer" | "College";
 

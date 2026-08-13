@@ -50,7 +50,7 @@ export const signupFn = createServerFn({ method: "POST" })
 
       setCookie(SESSION_COOKIE_NAME, result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env["NODE_ENV"] === "production",
         sameSite: "lax",
         maxAge: SESSION_MAX_AGE_SECONDS,
         path: "/",
@@ -75,7 +75,7 @@ export const loginFn = createServerFn({ method: "POST" })
 
       setCookie(SESSION_COOKIE_NAME, result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env["NODE_ENV"] === "production",
         sameSite: "lax",
         maxAge: SESSION_MAX_AGE_SECONDS,
         path: "/",

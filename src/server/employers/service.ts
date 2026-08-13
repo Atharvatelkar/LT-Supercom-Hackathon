@@ -1,7 +1,13 @@
 import crypto from "node:crypto";
-import { store, type DbJob, type DbApplication } from "../db/store";
+import { store, type DbJob, type DbApplication, type DbInterview, type DbOffer } from "../db/store";
 import { NotFoundError, ForbiddenError } from "../shared/errors";
-import { JobCreateSchema, JobUpdateSchema, ATSStageUpdateSchema } from "../shared/validation";
+import {
+  JobCreateSchema,
+  JobUpdateSchema,
+  ATSStageUpdateSchema,
+  ScheduleInterviewSchema,
+  CreateOfferSchema,
+} from "../shared/validation";
 import { z } from "zod";
 
 export async function getEmployerOverview(orgId: string) {
@@ -211,4 +217,109 @@ export async function updateATSStage(
   });
 
   return app;
+}
+
+export async function getEmployerInterviews(orgId: string) {
+  await store.init();
+  return store.interviews.filter((i) => i.organizationId === orgId);
+}
+
+export async function scheduleInterview(
+  orgId: string,
+  userId: string,
+  input: z.infer<typeof ScheduleInterviewSchema>
+) {
+  await store.init();
+  const parsed = ScheduleInterviewSchema.parse(input);
+  const now = new Date();
+  const interviewId = `int-${crypto.randomUUID()}`;
+
+  const newInterview: DbInterview = {
+    id: interviewId,
+    applicationId: parsed.applicationId || null,
+    jobId: parsed.jobId || null,
+    organizationId: orgId,
+    candidateName: parsed.candidateName,
+    role: parsed.role,
+    interviewType: parsed.interviewType,
+    scheduledAt: new Date(parsed.scheduledAt),
+    interviewer: parsed.interviewer || null,
+    mode: parsed.mode,
+    status: "SCHEDULED",
+    createdAt: now,
+  };
+
+  store.interviews.push(newInterview);
+
+  // Auto transition application stage to INTERVIEW if applicationId is supplied
+  if (parsed.applicationId) {
+    const app = store.applications.find((a) => a.id === parsed.applicationId);
+    if (app) {
+      app.stage = "INTERVIEW";
+      app.updatedAt = now;
+    }
+  }
+
+  store.auditLogs.push({
+    id: `aud-${crypto.randomUUID()}`,
+    userId,
+    organizationId: orgId,
+    action: "INTERVIEW_SCHEDULED",
+    entityType: "INTERVIEW",
+    entityId: interviewId,
+    createdAt: now,
+  });
+
+  return newInterview;
+}
+
+export async function getEmployerOffers(orgId: string) {
+  await store.init();
+  return store.offers.filter((o) => o.organizationId === orgId);
+}
+
+export async function createOffer(
+  orgId: string,
+  userId: string,
+  input: z.infer<typeof CreateOfferSchema>
+) {
+  await store.init();
+  const parsed = CreateOfferSchema.parse(input);
+  const now = new Date();
+  const offerId = `off-${crypto.randomUUID()}`;
+
+  const newOffer: DbOffer = {
+    id: offerId,
+    applicationId: parsed.applicationId || null,
+    organizationId: orgId,
+    candidateName: parsed.candidateName,
+    role: parsed.role,
+    salary: parsed.salary,
+    joiningDate: parsed.joiningDate,
+    status: "EXTENDED",
+    createdAt: now,
+  };
+
+  store.offers.push(newOffer);
+
+  // Auto transition application stage to OFFER if applicationId is supplied
+  if (parsed.applicationId) {
+    const app = store.applications.find((a) => a.id === parsed.applicationId);
+    if (app) {
+      app.stage = "OFFER";
+      app.updatedAt = now;
+    }
+  }
+
+  store.auditLogs.push({
+    id: `aud-${crypto.randomUUID()}`,
+    userId,
+    organizationId: orgId,
+    action: "OFFER_EXTENDED",
+    entityType: "OFFER",
+    entityId: offerId,
+    createdAt: now,
+  });
+
+  return newOffer;
 }

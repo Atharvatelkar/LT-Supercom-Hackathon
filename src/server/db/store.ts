@@ -171,6 +171,35 @@ export type DbNotification = {
   createdAt: Date;
 };
 
+export type DbInterview = {
+  id: string;
+  applicationId?: string | null;
+  jobId?: string | null;
+  organizationId: string;
+  candidateName: string;
+  role: string;
+  interviewType: string;
+  scheduledAt: Date;
+  interviewer?: string | null;
+  mode: string;
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  feedback?: string | null;
+  score?: number | null;
+  createdAt: Date;
+};
+
+export type DbOffer = {
+  id: string;
+  applicationId?: string | null;
+  organizationId: string;
+  candidateName: string;
+  role: string;
+  salary: string;
+  joiningDate: string;
+  status: "EXTENDED" | "ACCEPTED" | "DECLINED" | "EXPIRED";
+  createdAt: Date;
+};
+
 class MemoryStore {
   public users: DbUser[] = [];
   public sessions: DbSession[] = [];
@@ -181,6 +210,8 @@ class MemoryStore {
   public candidateSkills: DbCandidateSkill[] = [];
   public jobs: DbJob[] = [];
   public applications: DbApplication[] = [];
+  public interviews: DbInterview[] = [];
+  public offers: DbOffer[] = [];
   public students: DbStudent[] = [];
   public campusDrives: DbCampusDrive[] = [];
   public collegeAssessments: any[] = [];
@@ -189,6 +220,7 @@ class MemoryStore {
   public mockInterviews: any[] = [];
   public auditLogs: DbAuditLog[] = [];
   public notifications: DbNotification[] = [];
+  public verificationDocuments: any[] = [];
   public files: any[] = [];
   public aiConversations: any[] = [];
   public aiMessages: any[] = [];
@@ -211,6 +243,35 @@ class MemoryStore {
       matchedSkills: JSON.parse(a.matchedSkills),
       missingSkills: JSON.parse(a.missingSkills),
     })) as any;
+    this.interviews = [
+      {
+        id: "int-1",
+        applicationId: "app-1",
+        jobId: "job-backend-engineer",
+        organizationId: "org-northwind",
+        candidateName: "Aarav Mehta",
+        role: "Backend Engineer",
+        interviewType: "Technical Deep-Dive",
+        scheduledAt: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+        interviewer: "Rhea Kapoor",
+        mode: "Video (Google Meet)",
+        status: "SCHEDULED",
+        createdAt: new Date(),
+      },
+    ];
+    this.offers = [
+      {
+        id: "off-1",
+        applicationId: "app-1",
+        organizationId: "org-northwind",
+        candidateName: "Aarav Mehta",
+        role: "Backend Engineer",
+        salary: "₹22 LPA",
+        joiningDate: "01 Sep 2026",
+        status: "EXTENDED",
+        createdAt: new Date(),
+      },
+    ];
     this.students = seed.students.map((s) => ({ ...s, createdAt: new Date() })) as any;
     this.campusDrives = seed.campusDrives.map((d) => ({ ...d, createdAt: new Date() })) as any;
     this.collegeAssessments = seed.collegeAssessments;
@@ -227,7 +288,7 @@ declare global {
 }
 
 export const store = globalThis.__LT_SUPERCOM_STORE__ ?? new MemoryStore();
-if (process.env.NODE_ENV !== "production") {
+if (process.env["NODE_ENV"] !== "production") {
   globalThis.__LT_SUPERCOM_STORE__ = store;
 }
 

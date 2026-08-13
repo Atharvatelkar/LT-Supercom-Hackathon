@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getVerificationQueueFn, decideVerificationFn } from "@/server/admin/functions";
+import { getVerificationQueueFn, decideVerificationFn } from "@/api/admin";
 
 const tabs = ["Pending", "Approved", "Rejected"];
 

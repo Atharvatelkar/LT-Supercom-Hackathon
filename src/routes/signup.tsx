@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Logo, Panel } from "@/components/lt/kit";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { signupFn } from "@/server/auth/functions";
+import { signupFn } from "@/api/auth";
 
 const steps = ["Create account", "Verify", "Basic profile", "Career preferences"];
 

@@ -113,5 +113,39 @@ export async function runMultiTenancyTests() {
       const ctx = await validateSessionToken(token);
       assert(ctx === null, "Suspended user cannot have a valid active session context");
     },
+
+    "Employer A cannot view or manipulate Employer B's interviews or offers": async () => {
+      const { scheduleInterview, getEmployerInterviews, createOffer, getEmployerOffers } = await import(
+        "../src/server/employers/service"
+      );
+
+      // Schedule interview for Northwind
+      const intv = await scheduleInterview("org-northwind", "u-employer-rhea", {
+        candidateName: "Test Candidate",
+        role: "Backend Engineer",
+        interviewType: "Technical",
+        scheduledAt: new Date().toISOString(),
+      });
+      assert(intv.organizationId === "org-northwind", "Interview linked to Northwind");
+
+      const northwindIntvs = await getEmployerInterviews("org-northwind");
+      const arclightIntvs = await getEmployerInterviews("org-arclight");
+      assert(northwindIntvs.some((i) => i.id === intv.id), "Northwind has interview");
+      assert(!arclightIntvs.some((i) => i.id === intv.id), "Arclight cannot see Northwind interview");
+
+      // Extend offer for Northwind
+      const off = await createOffer("org-northwind", "u-employer-rhea", {
+        candidateName: "Test Candidate",
+        role: "Backend Engineer",
+        salary: "₹25 LPA",
+        joiningDate: "15 Sep 2026",
+      });
+      assert(off.organizationId === "org-northwind", "Offer linked to Northwind");
+
+      const northwindOffers = await getEmployerOffers("org-northwind");
+      const arclightOffers = await getEmployerOffers("org-arclight");
+      assert(northwindOffers.some((o) => o.id === off.id), "Northwind has offer");
+      assert(!arclightOffers.some((o) => o.id === off.id), "Arclight cannot see Northwind offer");
+    },
   });
 }

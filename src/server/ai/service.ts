@@ -11,7 +11,7 @@ export type MatchResult = {
   matchedSkills: string[];
   missingSkills: string[];
   explanation: string;
-  nextBestAction?: string;
+  nextBestAction?: string | undefined;
 };
 
 export function computeSkillMatch(
