@@ -1,0 +1,412 @@
+import bcrypt from "bcryptjs";
+import {
+  users,
+  organizations,
+  organizationMembers,
+  candidates,
+  skills,
+  candidateSkills,
+  jobs,
+  applications,
+  students,
+  campusDrives,
+  collegeAssessments,
+  hackathons,
+  courses,
+  verificationDocuments,
+  auditLogs,
+} from "./schema";
+
+export const DEFAULT_DEV_PASSWORD = "password123";
+
+export async function getSeedData() {
+  const passwordHash = await bcrypt.hash(DEFAULT_DEV_PASSWORD, 10);
+
+  // 1. Users
+  const seedUsers = [
+    {
+      id: "u-candidate-aarav",
+      name: "Aarav Mehta",
+      email: "aarav@mail.com",
+      phone: "+91 98800 22114",
+      role: "candidate",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-06-12T10:00:00Z"),
+      updatedAt: new Date("2026-08-10T10:00:00Z"),
+    },
+    {
+      id: "u-employer-rhea",
+      name: "Rhea Kapoor",
+      email: "rhea@northwind.io",
+      phone: "+91 98200 11223",
+      role: "employer",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-08-04T11:00:00Z"),
+      updatedAt: new Date("2026-08-04T11:00:00Z"),
+    },
+    {
+      id: "u-employer-sameer",
+      name: "Sameer Bhat",
+      email: "sameer@arclight.dev",
+      phone: "+91 99000 44112",
+      role: "employer",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-08-01T09:00:00Z"),
+      updatedAt: new Date("2026-08-01T09:00:00Z"),
+    },
+    {
+      id: "u-college-anil",
+      name: "Dr. Anil Menon",
+      email: "placements@sristi.edu",
+      phone: "+91 98450 77123",
+      role: "college",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-08-03T14:00:00Z"),
+      updatedAt: new Date("2026-08-03T14:00:00Z"),
+    },
+    {
+      id: "u-college-latha",
+      name: "Prof. Latha R",
+      email: "tpo@meridian.ac.in",
+      phone: "+91 94480 11009",
+      role: "college",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-07-26T10:00:00Z"),
+      updatedAt: new Date("2026-07-26T10:00:00Z"),
+    },
+    {
+      id: "u-admin-supercom",
+      name: "Platform Admin",
+      email: "admin@ltsupercom.com",
+      phone: "+91 90000 00001",
+      role: "admin",
+      status: "ACTIVE",
+      passwordHash,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    },
+  ];
+
+  // 2. Organizations
+  const seedOrgs = [
+    {
+      id: "org-northwind",
+      type: "EMPLOYER",
+      name: "Northwind Systems",
+      slug: "northwind-systems",
+      industryOrType: "Product Engineering",
+      website: "https://northwind.io",
+      sizeOrStudents: "1,200 employees",
+      registrationNo: "CIN-U72200KA2018PTC112233",
+      taxIdOrAicteCode: "27AABCU9603R1ZX",
+      address: "Outer Ring Road, Bellandur, Bengaluru",
+      yearEstablished: 2018,
+      verificationStatus: "APPROVED",
+      verificationNotes: "Verified via MCA registration and GSTIN portal.",
+      contactPersonName: "Rhea Kapoor",
+      contactEmail: "rhea@northwind.io",
+      contactPhone: "+91 98200 11223",
+      contactDesignation: "Head of Talent Acquisition",
+      createdByUserId: "u-employer-rhea",
+      createdAt: new Date("2026-08-04T11:00:00Z"),
+      updatedAt: new Date("2026-08-05T09:00:00Z"),
+    },
+    {
+      id: "org-arclight",
+      type: "EMPLOYER",
+      name: "Arclight Cloud",
+      slug: "arclight-cloud",
+      industryOrType: "Cloud Infrastructure",
+      website: "https://arclight.dev",
+      sizeOrStudents: "340 employees",
+      registrationNo: "CIN-U72900PN2020PTC199882",
+      taxIdOrAicteCode: "27AAACA1234B1Z5",
+      address: "Hinjawadi Phase 2, Pune",
+      yearEstablished: 2020,
+      verificationStatus: "APPROVED",
+      contactPersonName: "Sameer Bhat",
+      contactEmail: "sameer@arclight.dev",
+      contactPhone: "+91 99000 44112",
+      contactDesignation: "Director of Engineering",
+      createdByUserId: "u-employer-sameer",
+      createdAt: new Date("2026-08-01T09:00:00Z"),
+      updatedAt: new Date("2026-08-02T10:00:00Z"),
+    },
+    {
+      id: "org-trellis",
+      type: "EMPLOYER",
+      name: "Trellis Retail",
+      slug: "trellis-retail",
+      industryOrType: "Retail & E-commerce",
+      website: "https://trellis.com",
+      sizeOrStudents: "5,000 employees",
+      registrationNo: "CIN-U52100TN2015PTC099112",
+      taxIdOrAicteCode: "33AAACT9900P1Z8",
+      address: "OMR, Chennai",
+      yearEstablished: 2015,
+      verificationStatus: "REJECTED",
+      verificationNotes: "Registration documents were illegible. Resubmission requested.",
+      contactPersonName: "Kavya Menon",
+      contactEmail: "kavya@trellis.com",
+      contactPhone: "+91 90000 32211",
+      contactDesignation: "HR Manager",
+      createdAt: new Date("2026-07-28T14:00:00Z"),
+      updatedAt: new Date("2026-07-29T11:00:00Z"),
+    },
+    {
+      id: "org-sristi",
+      type: "COLLEGE",
+      name: "Sristi Institute of Technology",
+      slug: "sristi-tech",
+      industryOrType: "Autonomous Engineering College",
+      website: "https://sristi.edu",
+      sizeOrStudents: "3,400 students",
+      registrationNo: "AICTE-1-44992211",
+      taxIdOrAicteCode: "AICTE-SIT-BLR-09",
+      address: "Electronic City, Bengaluru",
+      yearEstablished: 2004,
+      verificationStatus: "APPROVED",
+      verificationNotes: "AICTE and VTU affiliation verified.",
+      contactPersonName: "Dr. Anil Menon",
+      contactEmail: "placements@sristi.edu",
+      contactPhone: "+91 98450 77123",
+      contactDesignation: "Dean - Industry Relations & Placements",
+      createdByUserId: "u-college-anil",
+      createdAt: new Date("2026-08-03T14:00:00Z"),
+      updatedAt: new Date("2026-08-04T10:00:00Z"),
+    },
+    {
+      id: "org-meridian",
+      type: "COLLEGE",
+      name: "Meridian College of Engineering",
+      slug: "meridian-college",
+      industryOrType: "Affiliated Institution",
+      website: "https://meridian.ac.in",
+      sizeOrStudents: "2,100 students",
+      registrationNo: "UGC-2012-MCE",
+      taxIdOrAicteCode: "UGC-TN-MCE-21",
+      address: "Guindy, Chennai",
+      yearEstablished: 2012,
+      verificationStatus: "APPROVED",
+      contactPersonName: "Prof. Latha R",
+      contactEmail: "tpo@meridian.ac.in",
+      contactPhone: "+91 94480 11009",
+      contactDesignation: "Training & Placement Officer",
+      createdByUserId: "u-college-latha",
+      createdAt: new Date("2026-07-26T10:00:00Z"),
+      updatedAt: new Date("2026-07-27T12:00:00Z"),
+    },
+    {
+      id: "org-pending-stellar",
+      type: "EMPLOYER",
+      name: "Stellar Healthtech Labs",
+      slug: "stellar-health",
+      industryOrType: "Healthtech",
+      website: "https://stellarhealth.io",
+      sizeOrStudents: "180 employees",
+      registrationNo: "CIN-U72200DL2021PTC334455",
+      taxIdOrAicteCode: "07AABCS8899Q1Z2",
+      address: "Okhla Phase 3, New Delhi",
+      yearEstablished: 2021,
+      verificationStatus: "PENDING",
+      contactPersonName: "Dr. Vikram Sethi",
+      contactEmail: "vikram@stellarhealth.io",
+      contactPhone: "+91 98110 55443",
+      contactDesignation: "Founder & CTO",
+      createdAt: new Date("2026-08-11T16:00:00Z"),
+      updatedAt: new Date("2026-08-11T16:00:00Z"),
+    },
+  ];
+
+  // 3. Organization Memberships
+  const seedMembers = [
+    { id: "mem-1", organizationId: "org-northwind", userId: "u-employer-rhea", orgRole: "owner" },
+    { id: "mem-2", organizationId: "org-arclight", userId: "u-employer-sameer", orgRole: "owner" },
+    { id: "mem-3", organizationId: "org-sristi", userId: "u-college-anil", orgRole: "owner" },
+    { id: "mem-4", organizationId: "org-meridian", userId: "u-college-latha", orgRole: "owner" },
+  ];
+
+  // 4. Candidate
+  const seedCandidate = {
+    id: "cand-aarav",
+    userId: "u-candidate-aarav",
+    headline: "Backend Developer",
+    location: "Bengaluru, India",
+    totalExperience: "3.5 years",
+    profileCompletion: 78,
+    careerReadiness: 72,
+    interviewReadiness: 64,
+    targetRole: "Backend Developer",
+    preferredWorkMode: "Hybrid",
+    expectedSalary: "₹22 LPA",
+    noticePeriod: "30 days",
+    resumeUrl: "/uploads/resumes/aarav_mehta_resume.pdf",
+    createdAt: new Date("2026-06-12T10:00:00Z"),
+    updatedAt: new Date("2026-08-10T10:00:00Z"),
+  };
+
+  // 5. Skills
+  const seedSkills = [
+    { id: "sk-java", name: "Java", group: "Technical", category: "Language" },
+    { id: "sk-spring-boot", name: "Spring Boot", group: "Technical", category: "Framework" },
+    { id: "sk-sql", name: "SQL", group: "Technical", category: "Database" },
+    { id: "sk-react", name: "React", group: "Technical", category: "Frontend" },
+    { id: "sk-docker", name: "Docker", group: "Technical", category: "DevOps" },
+    { id: "sk-k8s", name: "Kubernetes", group: "Technical", category: "Cloud" },
+    { id: "sk-kafka", name: "Kafka", group: "Technical", category: "Distributed Systems" },
+    { id: "sk-aws", name: "Cloud (AWS)", group: "Technical", category: "Cloud" },
+    { id: "sk-comm", name: "Communication", group: "Soft", category: "Interpersonal" },
+    { id: "sk-problem-solving", name: "Problem Solving", group: "Soft", category: "Cognitive" },
+    { id: "sk-ownership", name: "Ownership", group: "Soft", category: "Leadership" },
+  ];
+
+  // 6. Candidate Skills
+  const seedCandidateSkills = [
+    { id: "cs-1", candidateId: "cand-aarav", skillId: "sk-java", level: "Advanced", score: 88, verified: true },
+    { id: "cs-2", candidateId: "cand-aarav", skillId: "sk-spring-boot", level: "Advanced", score: 85, verified: true },
+    { id: "cs-3", candidateId: "cand-aarav", skillId: "sk-sql", level: "Advanced", score: 81, verified: true },
+    { id: "cs-4", candidateId: "cand-aarav", skillId: "sk-react", level: "Intermediate", score: 62, verified: false },
+    { id: "cs-5", candidateId: "cand-aarav", skillId: "sk-docker", level: "Beginner", score: 34, verified: false },
+    { id: "cs-6", candidateId: "cand-aarav", skillId: "sk-k8s", level: "Beginner", score: 22, verified: false },
+    { id: "cs-7", candidateId: "cand-aarav", skillId: "sk-comm", level: "Advanced", score: 84, verified: true },
+    { id: "cs-8", candidateId: "cand-aarav", skillId: "sk-problem-solving", level: "Advanced", score: 79, verified: true },
+    { id: "cs-9", candidateId: "cand-aarav", skillId: "sk-ownership", level: "Intermediate", score: 68, verified: false },
+  ];
+
+  // 7. Jobs
+  const seedJobs = [
+    {
+      id: "job-backend-engineer",
+      organizationId: "org-northwind",
+      title: "Backend Engineer",
+      description: "Build robust, low-latency microservices with Java, Spring Boot, and PostgreSQL in a high-scale environment.",
+      location: "Bengaluru",
+      mode: "Hybrid",
+      type: "Full-time",
+      industry: "Product",
+      experience: "3-6 yrs",
+      salary: "₹18-26 LPA",
+      status: "PUBLISHED",
+      createdByUserId: "u-employer-rhea",
+      postedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+    },
+    {
+      id: "job-platform-engineer",
+      organizationId: "org-arclight",
+      title: "Platform Engineer",
+      description: "Own cloud infrastructure, internal developer platforms, and automation across AWS and multi-region Kubernetes clusters.",
+      location: "Pune",
+      mode: "Remote",
+      type: "Full-time",
+      industry: "Cloud",
+      experience: "4-7 yrs",
+      salary: "₹22-30 LPA",
+      status: "PUBLISHED",
+      createdByUserId: "u-employer-sameer",
+      postedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000),
+    },
+    {
+      id: "job-java-microservices",
+      organizationId: "org-northwind",
+      title: "Java Microservices Developer",
+      description: "Develop resilient banking and transactional services using Spring Cloud, event-driven Kafka architectures, and SQL databases.",
+      location: "Hyderabad",
+      mode: "On-site",
+      type: "Full-time",
+      industry: "BFSI",
+      experience: "3-5 yrs",
+      salary: "₹16-22 LPA",
+      status: "PUBLISHED",
+      createdByUserId: "u-employer-rhea",
+      postedAt: new Date(),
+    },
+  ];
+
+  // 8. Applications
+  const seedApplications = [
+    {
+      id: "app-1",
+      jobId: "job-backend-engineer",
+      candidateId: "cand-aarav",
+      stage: "INTERVIEW",
+      matchScore: 82,
+      matchedSkills: JSON.stringify(["Java", "Spring Boot", "SQL"]),
+      missingSkills: JSON.stringify(["Kubernetes"]),
+      notes: "Cleared screening and assessment with high technical scores.",
+      appliedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000),
+      updatedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+    },
+    {
+      id: "app-2",
+      jobId: "job-platform-engineer",
+      candidateId: "cand-aarav",
+      stage: "SHORTLISTED",
+      matchScore: 74,
+      matchedSkills: JSON.stringify(["Java", "SQL"]),
+      missingSkills: JSON.stringify(["Docker", "Terraform"]),
+      appliedAt: new Date(Date.now() - 7 * 24 * 3600 * 1000),
+      updatedAt: new Date(Date.now() - 4 * 24 * 3600 * 1000),
+    },
+  ];
+
+  // 9. Students (College)
+  const seedStudents = [
+    { id: "stu-1", collegeOrgId: "org-sristi", name: "Ishaan Kulkarni", rollNumber: "1SI22CS045", email: "ishaan@sristi.edu", branch: "CSE", graduationYear: "2026", cgpaOrScore: 82, placementStatus: "Placed", placedCompany: "Northwind Systems" },
+    { id: "stu-2", collegeOrgId: "org-sristi", name: "Sara Thomas", rollNumber: "1SI22IT018", email: "sara@sristi.edu", branch: "IT", graduationYear: "2026", cgpaOrScore: 78, placementStatus: "Interview", placedCompany: "Vertex Financial" },
+    { id: "stu-3", collegeOrgId: "org-sristi", name: "Nikhil Verma", rollNumber: "1SI22EC089", email: "nikhil@sristi.edu", branch: "ECE", graduationYear: "2026", cgpaOrScore: 64, placementStatus: "Eligible" },
+    { id: "stu-4", collegeOrgId: "org-sristi", name: "Priya Das", rollNumber: "1SI22CS102", email: "priya@sristi.edu", branch: "CSE", graduationYear: "2026", cgpaOrScore: 91, placementStatus: "Placed", placedCompany: "Arclight Cloud" },
+    { id: "stu-5", collegeOrgId: "org-sristi", name: "Aman Gupta", rollNumber: "1SI22ME012", email: "aman@sristi.edu", branch: "MECH", graduationYear: "2026", cgpaOrScore: 55, placementStatus: "Not Eligible" },
+    { id: "stu-6", collegeOrgId: "org-sristi", name: "Tanvi Joshi", rollNumber: "1SI23CS077", email: "tanvi@sristi.edu", branch: "CSE", graduationYear: "2027", cgpaOrScore: 73, placementStatus: "Assessment", placedCompany: "Trellis Retail" },
+  ];
+
+  // 10. Campus Drives
+  const seedCampusDrives = [
+    { id: "drv-1", collegeOrgId: "org-sristi", employerOrgId: "org-northwind", companyName: "Northwind Systems", driveDate: "12 Aug 2026", rolesCount: 3, registeredCount: 214, status: "Upcoming" },
+    { id: "drv-2", collegeOrgId: "org-sristi", companyName: "Vertex Financial", driveDate: "28 Jul 2026", rolesCount: 2, registeredCount: 178, status: "Active" },
+    { id: "drv-3", collegeOrgId: "org-sristi", employerOrgId: "org-arclight", companyName: "Arclight Cloud", driveDate: "14 Jun 2026", rolesCount: 4, registeredCount: 260, status: "Completed" },
+  ];
+
+  // 11. Assessments
+  const seedAssessments = [
+    { id: "ass-1", collegeOrgId: "org-sristi", title: "Core Data Structures & Algorithms", topic: "DSA & Problem Solving", totalStudents: 180, averageScore: 74, date: "02 Aug 2026", status: "Completed" },
+    { id: "ass-2", collegeOrgId: "org-sristi", title: "Full Stack & Microservices Sprint", topic: "Backend & Systems", totalStudents: 140, averageScore: 68, date: "15 Jul 2026", status: "Completed" },
+  ];
+
+  // 12. Hackathons
+  const seedHackathons = [
+    { id: "hck-1", collegeOrgId: "org-sristi", name: "BuildAI Campus Sprint", eventDate: "22 Aug 2026", teamsCount: 48, status: "Upcoming" },
+    { id: "hck-2", collegeOrgId: "org-sristi", name: "Cloud Native Challenge", eventDate: "30 Jul 2026", teamsCount: 36, status: "Active" },
+    { id: "hck-3", collegeOrgId: "org-sristi", name: "FinTech Hack 2026", eventDate: "18 May 2026", teamsCount: 52, status: "Past" },
+  ];
+
+  // 13. Courses / Upskilling
+  const seedCourses = [
+    { id: "crs-1", title: "Docker Fundamentals", provider: "LT Learn", hours: 6, level: "Beginner", skill: "Docker", url: "#" },
+    { id: "crs-2", title: "Kubernetes Basics", provider: "LT Learn", hours: 9, level: "Beginner", skill: "Kubernetes", url: "#" },
+    { id: "crs-3", title: "Cloud Fundamentals on AWS", provider: "Arclight Academy", hours: 12, level: "Intermediate", skill: "Cloud", url: "#" },
+    { id: "crs-4", title: "Advanced Spring Boot Patterns", provider: "LT Learn", hours: 8, level: "Advanced", skill: "Spring Boot", url: "#" },
+    { id: "crs-5", title: "System Design for Backend Engineers", provider: "Vertex Institute", hours: 14, level: "Advanced", skill: "System Design", url: "#" },
+    { id: "crs-6", title: "SQL Performance Tuning", provider: "LT Learn", hours: 5, level: "Intermediate", skill: "SQL", url: "#" },
+  ];
+
+  return {
+    users: seedUsers,
+    organizations: seedOrgs,
+    organizationMembers: seedMembers,
+    candidate: seedCandidate,
+    skills: seedSkills,
+    candidateSkills: seedCandidateSkills,
+    jobs: seedJobs,
+    applications: seedApplications,
+    students: seedStudents,
+    campusDrives: seedCampusDrives,
+    collegeAssessments: seedAssessments,
+    hackathons: seedHackathons,
+    courses: seedCourses,
+  };
+}

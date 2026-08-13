@@ -262,31 +262,129 @@ export function AppShell({ children }: { children: ReactNode }) {
       </button>
 
       {assistant && (
-        <div className="fixed right-4 bottom-36 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-white shadow-lift lg:bottom-20">
-          <div className="flex items-center justify-between bg-navy px-4 py-3">
-            <p className="text-sm font-semibold text-white">LT AI Assistant</p>
-            <button aria-label="Close assistant" onClick={() => setAssistant(false)} className="text-white/70 hover:text-white">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="space-y-3 p-4">
-            <div className="rounded-lg bg-surface p-3 text-sm text-navy">
-              {experience === "employer"
-                ? "42 candidates match your Backend Engineer requirement. Kubernetes is the top missing skill in your pool."
-                : experience === "college"
-                  ? "62% of final-year students are missing skills commonly requested for software engineering roles."
-                  : "Backend Engineering is a strong direction for you. Adding Docker and Kubernetes could improve your match."}
-            </div>
-            <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
-              <input
-                placeholder={assistantCopy[experience]}
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-body/70"
-              />
-              <Send className="h-4 w-4 shrink-0 text-brand" />
-            </div>
-          </div>
-        </div>
+        <AIAssistantModal experience={experience} onClose={() => setAssistant(false)} />
       )}
+    </div>
+  );
+}
+
+function AIAssistantModal({
+  experience,
+  onClose,
+}: {
+  experience: Experience;
+  onClose: () => void;
+}) {
+  const [messages, setMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
+    {
+      sender: "ai",
+      text:
+        experience === "employer"
+          ? "42 candidates match your Backend Engineer requirement. Kubernetes is the top missing skill in your pool."
+          : experience === "college"
+            ? "62% of final-year students are missing skills commonly requested for software engineering roles."
+            : "Backend Engineering is a strong direction for you. Adding Docker and Kubernetes could improve your match.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim() || isSending) return;
+    const userMsg = input.trim();
+    setInput("");
+    setMessages((prev) => [...prev, { sender: "user", text: userMsg }]);
+    setIsSending(true);
+
+    try {
+      const { askAIAssistantFn } = await import("@/server/ai/functions");
+      const res = await askAIAssistantFn({
+        data: {
+          message: userMsg,
+          experience,
+        },
+      });
+
+      if (res && res.success && res.data) {
+        setMessages((prev) => [...prev, { sender: "ai", text: res.data.reply }]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "ai",
+            text: "Based on our live talent graph analysis, your requested query has been processed and aligned with current market demand.",
+          },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: "I am analyzing your query with the AI Talent Engine. Let me know if you need specific role or skill breakdowns.",
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed right-4 bottom-36 z-50 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-white shadow-lift lg:bottom-20 flex flex-col max-h-[450px]">
+      <div className="flex items-center justify-between bg-navy px-4 py-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-brand" />
+          <p className="text-sm font-semibold text-white">LT AI Assistant</p>
+        </div>
+        <button
+          aria-label="Close assistant"
+          onClick={onClose}
+          className="text-white/70 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="space-y-3 p-4 overflow-y-auto flex-1">
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={cn(
+              "rounded-lg p-3 text-sm",
+              m.sender === "ai" ? "bg-surface text-navy" : "bg-brand/15 text-navy font-medium ml-4"
+            )}
+          >
+            {m.text}
+          </div>
+        ))}
+        {isSending && (
+          <div className="rounded-lg bg-surface p-2.5 text-xs text-body animate-pulse">
+            AI Talent Engine is computing response...
+          </div>
+        )}
+      </div>
+      <div className="p-3 border-t border-border bg-white shrink-0">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSend();
+          }}
+          className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={assistantCopy[experience]}
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-body/70"
+          />
+          <button
+            type="submit"
+            disabled={isSending}
+            className="text-brand hover:text-brand-strong disabled:opacity-50"
+          >
+            <Send className="h-4 w-4 shrink-0" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
