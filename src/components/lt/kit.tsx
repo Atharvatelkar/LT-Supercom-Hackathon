@@ -6,22 +6,10 @@ export function Logo({ tone = "navy", className }: { tone?: "navy" | "light"; cl
   return (
     <Link
       to="/"
-      className={cn("inline-flex shrink-0", tone === "light" && "rounded-full bg-white p-0.5", className)}
+      className={cn("inline-flex shrink-0", tone === "light" && "rounded-sm", className)}
       aria-label="TRILINK home"
     >
-      <svg viewBox="0 0 64 64" className="h-10 w-10" role="img" aria-label="TRILINK logo">
-        <defs>
-          <linearGradient id="trilink-ring" x1="10" y1="12" x2="54" y2="53" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#6937F5" />
-            <stop offset="0.46" stopColor="#2E62E9" />
-            <stop offset="1" stopColor="#00BCA5" />
-          </linearGradient>
-        </defs>
-        <circle cx="32" cy="32" r="25" fill="white" />
-        <path d="M46.5 12.5A25 25 0 1 0 53 45" fill="none" stroke="url(#trilink-ring)" strokeWidth="4" strokeLinecap="round" />
-        <path d="M15 20h28l-3.8 5.8h-8.1L24.8 45h-7.1L24 25.8H11.2z" fill="#5B35ED" />
-        <path d="M36.5 20h7.1L36.8 40h14.6L48 45H26.4z" fill="#00AE9A" />
-      </svg>
+      <img src="/trilink-logo.png" alt="TRILINK — Connect, Build, Grow" className="h-10 w-auto max-w-40 object-contain" />
     </Link>
   );
 }
