@@ -4,22 +4,24 @@ import { cn } from "@/lib/utils";
 
 export function Logo({ tone = "navy", className }: { tone?: "navy" | "light"; className?: string }) {
   return (
-    <Link to="/" className={cn("inline-flex items-center gap-2.5", className)} aria-label="TRILINK home">
-      <span className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-navy text-[19px] font-black italic tracking-tighter text-white">
-        <span className="relative z-10 -mr-1">T</span>
-        <span className="absolute z-10 translate-x-1 text-brand">L</span>
-        <span className="absolute h-[142%] w-[54%] rotate-45 rounded-full border-2 border-white/90" />
-        <span className="absolute top-1 right-0.5 h-1.5 w-1.5 rounded-full bg-brand" />
-      </span>
-      <span className="leading-none">
-        <span className="font-display text-[18px] font-extrabold tracking-tight">
-          <span className={tone === "light" ? "text-white" : "text-navy"}>TRI</span>
-          <span className="text-brand">LINK</span>
-        </span>
-        <span className={cn("mt-1 hidden text-[7px] font-bold tracking-[0.18em] uppercase sm:block", tone === "light" ? "text-white/75" : "text-navy/65")}>
-          Connect · Build · Grow
-        </span>
-      </span>
+    <Link
+      to="/"
+      className={cn("inline-flex shrink-0", tone === "light" && "rounded-full bg-white p-0.5", className)}
+      aria-label="TRILINK home"
+    >
+      <svg viewBox="0 0 64 64" className="h-10 w-10" role="img" aria-label="TRILINK logo">
+        <defs>
+          <linearGradient id="trilink-ring" x1="10" y1="12" x2="54" y2="53" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#6937F5" />
+            <stop offset="0.46" stopColor="#2E62E9" />
+            <stop offset="1" stopColor="#00BCA5" />
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="25" fill="white" />
+        <path d="M46.5 12.5A25 25 0 1 0 53 45" fill="none" stroke="url(#trilink-ring)" strokeWidth="4" strokeLinecap="round" />
+        <path d="M15 20h28l-3.8 5.8h-8.1L24.8 45h-7.1L24 25.8H11.2z" fill="#5B35ED" />
+        <path d="M36.5 20h7.1L36.8 40h14.6L48 45H26.4z" fill="#00AE9A" />
+      </svg>
     </Link>
   );
 }
