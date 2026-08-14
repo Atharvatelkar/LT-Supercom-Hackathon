@@ -17,7 +17,7 @@ import { skills, skillGap } from "@/lib/mock-data";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LT Supercom — AI-Powered Talent Intelligence Platform" },
+      { title: "TRILINK — AI-Powered Talent Intelligence Platform" },
       {
         name: "description",
         content:
