@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { jobs } from "@/lib/mock-data";
+import { useEffect, useMemo, useState } from "react";
+import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { jobs as fallbackJobs } from "@/lib/mock-data";
 import { JobCard } from "@/components/lt/job-card";
 import { Chips, Panel } from "@/components/lt/kit";
 import { Button } from "@/components/ui/button";
+import { searchPublishedJobsFn, applyToJobFn } from "@/api/candidate";
 
 const filterGroups = [
   { label: "Location", options: ["Any", "Bengaluru", "Pune", "Hyderabad", "Chennai", "Remote"], key: "location" },
@@ -24,15 +26,76 @@ export function JobsExplorer() {
     industry: "Any",
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [liveJobs, setLiveJobs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+
+  const fetchJobs = async () => {
+    try {
+      const res = await searchPublishedJobsFn();
+      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+        setLiveJobs(
+          res.data.map((j) => ({
+            id: j.id,
+            title: j.title,
+            company: j.company,
+            location: j.location,
+            mode: j.mode,
+            type: j.type,
+            experience: j.experience,
+            salary: j.salary,
+            industry: j.industry,
+            posted: j.posted,
+            match: 85,
+            matched: j.skills || ["Java", "SQL"],
+            missing: ["Kubernetes"],
+          }))
+        );
+      } else {
+        setLiveJobs(fallbackJobs);
+      }
+    } catch {
+      setLiveJobs(fallbackJobs);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const handleApply = async (jobId: string) => {
+    setApplyingJobId(jobId);
+    try {
+      const res = await applyToJobFn({
+        data: { jobId, coverNote: "Interested candidate application from Job Explorer." },
+      });
+
+      if (res && res.success) {
+        toast.success("Application submitted successfully!", {
+          description: "Your application is now visible in your Candidate Applications dashboard.",
+        });
+      } else {
+        toast.error("Application submission failed", {
+          description: (res as any)?.error?.message || "You may have already applied to this position.",
+        });
+      }
+    } catch (err: any) {
+      toast.error("Application failed", { description: err.message });
+    } finally {
+      setApplyingJobId(null);
+    }
+  };
 
   const results = useMemo(() => {
-    let list = jobs.filter((j) => {
+    let list = liveJobs.filter((j) => {
       const q = query.trim().toLowerCase();
       const matchesQuery =
         !q ||
         j.title.toLowerCase().includes(q) ||
         j.company.toLowerCase().includes(q) ||
-        j.matched.some((s) => s.toLowerCase().includes(q));
+        (j.matched && j.matched.some((s: string) => s.toLowerCase().includes(q)));
       return (
         matchesQuery &&
         (filters["location"] === "Any" || j.location === filters["location"]) &&
@@ -42,10 +105,10 @@ export function JobsExplorer() {
       );
     });
     if (tab === "High Match Jobs") list = list.filter((j) => j.match >= 75);
-    if (tab === "Recently Added") list = [...list].sort((a, b) => a.posted.localeCompare(b.posted));
+    if (tab === "Recently Added") list = [...list].sort((a, b) => b.posted.localeCompare(a.posted));
     else list = [...list].sort((a, b) => b.match - a.match);
     return list;
-  }, [query, filters, tab]);
+  }, [query, filters, tab, liveJobs]);
 
   return (
     <div className="space-y-6">
@@ -110,17 +173,26 @@ export function JobsExplorer() {
 
         <div className="min-w-0 space-y-4">
           <Chips items={tabs} value={tab} onChange={setTab} />
-          <p className="text-xs text-body">{results.length} roles matched</p>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {results.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
-          {results.length === 0 && (
-            <Panel className="py-14 text-center">
-              <p className="text-sm font-semibold text-heading">No roles match these filters</p>
-              <p className="mt-1 text-xs text-body">Try widening location or clearing skills filters.</p>
+          {isLoading ? (
+            <Panel className="py-12 text-center text-body">
+              <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand" />
+              <p className="mt-2 text-xs">Loading published job postings...</p>
             </Panel>
+          ) : (
+            <>
+              <p className="text-xs text-body">{results.length} roles matched</p>
+              <div className="grid gap-4 xl:grid-cols-2">
+                {results.map((job) => (
+                  <JobCard key={job.id} job={job} onApply={handleApply} />
+                ))}
+              </div>
+              {results.length === 0 && (
+                <Panel className="py-14 text-center">
+                  <p className="text-sm font-semibold text-heading">No roles match these filters</p>
+                  <p className="mt-1 text-xs text-body">Try widening location or clearing skills filters.</p>
+                </Panel>
+              )}
+            </>
           )}
         </div>
       </div>

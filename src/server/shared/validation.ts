@@ -13,6 +13,7 @@ export const ApplicationStageEnum = z.enum([
   "OFFER",
   "HIRED",
   "REJECTED",
+  "WITHDRAWN",
 ]);
 
 // Auth schemas
@@ -162,4 +163,40 @@ export const AIChatSchema = z.object({
   message: z.string().min(1),
   conversationId: z.string().optional(),
   experience: RoleEnum.default("candidate"),
+});
+
+// Candidate Education Schema
+export const CandidateEducationCreateSchema = z.object({
+  institution: z.string().min(2, "Institution name is required"),
+  degree: z.string().min(2, "Degree is required"),
+  fieldOfStudy: z.string().optional(),
+  startYear: z.number().min(1950).max(2035).optional(),
+  endYear: z.number().min(1950).max(2035).optional(),
+  grade: z.string().optional(),
+});
+
+// Candidate Experience Schema
+export const CandidateExperienceCreateSchema = z.object({
+  company: z.string().min(2, "Company name is required"),
+  title: z.string().min(2, "Job title is required"),
+  location: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isCurrent: z.boolean().default(false),
+  description: z.string().optional(),
+});
+
+// Application Withdraw Schema
+export const WithdrawApplicationSchema = z.object({
+  applicationId: z.string().min(1),
+  reason: z.string().optional(),
+});
+
+// Job Search / Filter Schema
+export const JobFilterSchema = z.object({
+  query: z.string().optional(),
+  mode: z.enum(["Remote", "Hybrid", "On-site"]).optional(),
+  type: z.enum(["Full-time", "Contract", "Internship"]).optional(),
+  location: z.string().optional(),
+  limit: z.number().min(1).max(100).default(20),
 });

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MatchRing, StatusBadge } from "./kit";
 import type { Job } from "@/lib/mock-data";
 
-export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
+export function JobCard({ job, compact, onApply }: { job: Job; compact?: boolean; onApply?: (jobId: string) => void }) {
   return (
     <article className="panel hover-lift p-5">
       <div className="flex items-start justify-between gap-4">
@@ -56,9 +56,15 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
         <Button asChild variant="outline" size="sm" className="border-navy/25 text-navy hover:bg-surface">
           <Link to="/app/jobs">View Job</Link>
         </Button>
-        <Button asChild size="sm">
-          <Link to="/app/applications">Apply</Link>
-        </Button>
+        {onApply ? (
+          <Button size="sm" onClick={() => onApply(job.id)}>
+            Apply
+          </Button>
+        ) : (
+          <Button asChild size="sm">
+            <Link to="/app/applications">Apply</Link>
+          </Button>
+        )}
       </div>
     </article>
   );

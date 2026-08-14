@@ -1,7 +1,14 @@
 import crypto from "node:crypto";
 import { store, type DbCandidate, type DbCandidateSkill } from "../db/store";
-import { NotFoundError, ConflictError } from "../shared/errors";
-import { CandidateProfileUpdateSchema, CandidateSkillUpsertSchema } from "../shared/validation";
+import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from "../shared/errors";
+import {
+  CandidateProfileUpdateSchema,
+  CandidateSkillUpsertSchema,
+  CandidateEducationCreateSchema,
+  CandidateExperienceCreateSchema,
+  WithdrawApplicationSchema,
+  JobFilterSchema,
+} from "../shared/validation";
 import { z } from "zod";
 
 export async function getCandidateOverview(candidateId: string) {
@@ -179,4 +186,227 @@ export async function applyToJob(candidateId: string, jobId: string, coverNote?:
   });
 
   return newApp;
+}
+
+export async function withdrawApplication(candidateId: string, applicationId: string, reason?: string) {
+  await store.init();
+  const app = store.applications.find((a) => a.id === applicationId);
+  if (!app) throw new NotFoundError("Application record not found.");
+
+  if (app.candidateId !== candidateId) {
+    throw new ForbiddenError("You cannot withdraw another candidate's application.");
+  }
+
+  if (app.stage === "HIRED" || app.stage === "REJECTED" || app.stage === "WITHDRAWN") {
+    throw new ValidationError(`Cannot withdraw application currently in '${app.stage}' status.`);
+  }
+
+  const prevStage = app.stage;
+  app.stage = "WITHDRAWN";
+  app.updatedAt = new Date();
+
+  const cand = store.candidates.find((c) => c.id === candidateId);
+  if (cand) {
+    store.auditLogs.push({
+      id: `aud-${crypto.randomUUID()}`,
+      userId: cand.userId,
+      action: "APPLICATION_WITHDRAWN",
+      entityType: "APPLICATION",
+      entityId: app.id,
+      metadata: JSON.stringify({ from: prevStage, reason }),
+      createdAt: new Date(),
+    });
+  }
+
+  return app;
+}
+
+export async function addCandidateEducation(
+  candidateId: string,
+  input: z.infer<typeof CandidateEducationCreateSchema>
+) {
+  await store.init();
+  const cand = store.candidates.find((c) => c.id === candidateId);
+  if (!cand) throw new NotFoundError("Candidate not found.");
+
+  const parsed = CandidateEducationCreateSchema.parse(input);
+  const eduId = `edu-${crypto.randomUUID()}`;
+
+  const record = {
+    id: eduId,
+    candidateId,
+    institution: parsed.institution,
+    degree: parsed.degree,
+    fieldOfStudy: parsed.fieldOfStudy || null,
+    startYear: parsed.startYear || null,
+    endYear: parsed.endYear || null,
+    grade: parsed.grade || null,
+  };
+
+  store.candidateEducations.push(record);
+  return record;
+}
+
+export async function getCandidateEducations(candidateId: string) {
+  await store.init();
+  return store.candidateEducations.filter((e) => e.candidateId === candidateId);
+}
+
+export async function deleteCandidateEducation(candidateId: string, educationId: string) {
+  await store.init();
+  const edu = store.candidateEducations.find((e) => e.id === educationId);
+  if (!edu) throw new NotFoundError("Education record not found.");
+
+  if (edu.candidateId !== candidateId) {
+    throw new ForbiddenError("Cannot delete another candidate's education record.");
+  }
+
+  store.candidateEducations = store.candidateEducations.filter((e) => e.id !== educationId);
+  return true;
+}
+
+export async function addCandidateExperience(
+  candidateId: string,
+  input: z.infer<typeof CandidateExperienceCreateSchema>
+) {
+  await store.init();
+  const cand = store.candidates.find((c) => c.id === candidateId);
+  if (!cand) throw new NotFoundError("Candidate not found.");
+
+  const parsed = CandidateExperienceCreateSchema.parse(input);
+  const expId = `exp-${crypto.randomUUID()}`;
+
+  const record = {
+    id: expId,
+    candidateId,
+    company: parsed.company,
+    title: parsed.title,
+    location: parsed.location || null,
+    startDate: parsed.startDate || null,
+    endDate: parsed.isCurrent ? null : parsed.endDate || null,
+    isCurrent: parsed.isCurrent,
+    description: parsed.description || null,
+  };
+
+  store.candidateExperiences.push(record);
+  return record;
+}
+
+export async function getCandidateExperiences(candidateId: string) {
+  await store.init();
+  return store.candidateExperiences.filter((e) => e.candidateId === candidateId);
+}
+
+export async function deleteCandidateExperience(candidateId: string, experienceId: string) {
+  await store.init();
+  const exp = store.candidateExperiences.find((e) => e.id === experienceId);
+  if (!exp) throw new NotFoundError("Experience record not found.");
+
+  if (exp.candidateId !== candidateId) {
+    throw new ForbiddenError("Cannot delete another candidate's experience record.");
+  }
+
+  store.candidateExperiences = store.candidateExperiences.filter((e) => e.id !== experienceId);
+  return true;
+}
+
+export async function addCandidateSkill(
+  candidateId: string,
+  input: z.infer<typeof CandidateSkillUpsertSchema>
+) {
+  await store.init();
+  const cand = store.candidates.find((c) => c.id === candidateId);
+  if (!cand) throw new NotFoundError("Candidate not found.");
+
+  const parsed = CandidateSkillUpsertSchema.parse(input);
+  const now = new Date();
+
+  let skill = store.skills.find((s) => s.name.toLowerCase() === parsed.name.toLowerCase().trim());
+  if (!skill) {
+    skill = { id: `sk-${crypto.randomUUID()}`, name: parsed.name, group: parsed.group };
+    store.skills.push(skill);
+  }
+
+  const existingLink = store.candidateSkills.find(
+    (cs) => cs.candidateId === candidateId && cs.skillId === skill.id
+  );
+
+  if (existingLink) {
+    existingLink.level = parsed.level;
+    existingLink.score = parsed.score ?? existingLink.score;
+    existingLink.updatedAt = now;
+    return existingLink;
+  }
+
+  const newLink = {
+    id: `cs-${crypto.randomUUID()}`,
+    candidateId,
+    skillId: skill.id,
+    level: parsed.level,
+    score: parsed.score ?? 75,
+    verified: false,
+    updatedAt: now,
+  };
+
+  store.candidateSkills.push(newLink);
+  return newLink;
+}
+
+export async function removeCandidateSkill(candidateId: string, skillId: string) {
+  await store.init();
+  const cs = store.candidateSkills.find(
+    (item) => item.candidateId === candidateId && (item.id === skillId || item.skillId === skillId)
+  );
+
+  if (!cs) throw new NotFoundError("Skill link not found for candidate.");
+  store.candidateSkills = store.candidateSkills.filter((item) => item.id !== cs.id);
+  return true;
+}
+
+export async function searchPublishedJobs(filter?: z.infer<typeof JobFilterSchema>) {
+  await store.init();
+  const parsed = filter ? JobFilterSchema.parse(filter) : { limit: 20 };
+
+  let list = store.jobs.filter((j) => j.status === "PUBLISHED");
+
+  if (parsed.query) {
+    const q = parsed.query.toLowerCase();
+    list = list.filter(
+      (j) =>
+        j.title.toLowerCase().includes(q) ||
+        j.description.toLowerCase().includes(q) ||
+        (j.skills && j.skills.some((s) => s.toLowerCase().includes(q)))
+    );
+  }
+
+  if (parsed.mode) {
+    list = list.filter((j) => j.mode === parsed.mode);
+  }
+
+  if (parsed.type) {
+    list = list.filter((j) => j.type === parsed.type);
+  }
+
+  if (parsed.location) {
+    const loc = parsed.location.toLowerCase();
+    list = list.filter((j) => j.location.toLowerCase().includes(loc));
+  }
+
+  return list.slice(0, parsed.limit).map((j) => {
+    const org = store.organizations.find((o) => o.id === j.organizationId);
+    return {
+      id: j.id,
+      title: j.title,
+      company: org?.name || "Company",
+      location: j.location,
+      experience: j.experience,
+      salary: j.salary,
+      mode: j.mode,
+      type: j.type,
+      industry: j.industry || "Technology",
+      posted: j.postedAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+      skills: j.skills || ["Java", "SQL"],
+      description: j.description,
+    };
+  });
 }

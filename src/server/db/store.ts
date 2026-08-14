@@ -113,7 +113,7 @@ export type DbApplication = {
   id: string;
   jobId: string;
   candidateId: string;
-  stage: "APPLIED" | "SCREENING" | "SHORTLISTED" | "ASSESSMENT" | "INTERVIEW" | "OFFER" | "HIRED" | "REJECTED";
+  stage: "APPLIED" | "SCREENING" | "SHORTLISTED" | "ASSESSMENT" | "INTERVIEW" | "OFFER" | "HIRED" | "REJECTED" | "WITHDRAWN";
   matchScore: number;
   matchedSkills: string[];
   missingSkills: string[];
@@ -188,6 +188,29 @@ export type DbInterview = {
   createdAt: Date;
 };
 
+export type DbCandidateExperience = {
+  id: string;
+  candidateId: string;
+  company: string;
+  title: string;
+  location?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  isCurrent?: boolean;
+  description?: string | null;
+};
+
+export type DbCandidateEducation = {
+  id: string;
+  candidateId: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string | null;
+  startYear?: number | null;
+  endYear?: number | null;
+  grade?: string | null;
+};
+
 export type DbOffer = {
   id: string;
   applicationId?: string | null;
@@ -208,6 +231,8 @@ class MemoryStore {
   public candidates: DbCandidate[] = [];
   public skills: DbSkill[] = [];
   public candidateSkills: DbCandidateSkill[] = [];
+  public candidateExperiences: DbCandidateExperience[] = [];
+  public candidateEducations: DbCandidateEducation[] = [];
   public jobs: DbJob[] = [];
   public applications: DbApplication[] = [];
   public interviews: DbInterview[] = [];

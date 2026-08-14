@@ -1,5 +1,6 @@
 import { runAuthTests } from "./auth.test";
 import { runMultiTenancyTests } from "./multi-tenancy.test";
+import { runPhase2SecurityTests } from "./phase2-security.test";
 
 async function main() {
   console.log("==================================================");
@@ -9,6 +10,7 @@ async function main() {
   try {
     await runAuthTests();
     await runMultiTenancyTests();
+    await runPhase2SecurityTests();
     console.log("==================================================");
     console.log("🎉 ALL TEST SUITES PASSED CLEANLY WITH 0 ERRORS!");
     console.log("==================================================");

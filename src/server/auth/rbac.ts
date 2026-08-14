@@ -67,3 +67,15 @@ export function requireCollege(
   }
   return auth as AuthenticatedContext & { organization: NonNullable<AuthenticatedContext["organization"]> };
 }
+
+export function verifyCandidateOwnership(authCandidateId: string, targetCandidateId: string): void {
+  if (authCandidateId !== targetCandidateId) {
+    throw new ForbiddenError("Access denied. Candidate can only access their own profile and records.");
+  }
+}
+
+export function verifyOrgOwnership(authOrgId: string, targetOrgId: string): void {
+  if (authOrgId !== targetOrgId) {
+    throw new ForbiddenError("Access denied. Organization data is isolated to its owning entity.");
+  }
+}

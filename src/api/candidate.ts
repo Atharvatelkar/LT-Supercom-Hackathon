@@ -5,10 +5,28 @@ import {
   updateCandidateProfile,
   getCandidateSkillGap,
   applyToJob,
+  withdrawApplication,
+  addCandidateEducation,
+  getCandidateEducations,
+  deleteCandidateEducation,
+  addCandidateExperience,
+  getCandidateExperiences,
+  deleteCandidateExperience,
+  addCandidateSkill,
+  removeCandidateSkill,
+  searchPublishedJobs,
 } from "@/server/candidates/service";
 import { validateSessionToken, SESSION_COOKIE_NAME } from "@/server/auth/session";
 import { requireCandidate } from "@/server/auth/rbac";
-import { CandidateProfileUpdateSchema, ApplyJobSchema } from "@/server/shared/validation";
+import {
+  CandidateProfileUpdateSchema,
+  ApplyJobSchema,
+  CandidateSkillUpsertSchema,
+  CandidateEducationCreateSchema,
+  CandidateExperienceCreateSchema,
+  WithdrawApplicationSchema,
+  JobFilterSchema,
+} from "@/server/shared/validation";
 import { formatErrorResponse } from "@/server/shared/errors";
 import { store } from "@/server/db/store";
 
@@ -62,6 +80,18 @@ export const applyToJobFn = createServerFn({ method: "POST" })
     }
   });
 
+export const withdrawApplicationFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => WithdrawApplicationSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      const res = await withdrawApplication(auth.candidateId, data.applicationId, data.reason);
+      return { success: true as const, data: res };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
 export const getCandidateApplicationsFn = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const auth = await getCandidateAuth();
@@ -73,6 +103,7 @@ export const getCandidateApplicationsFn = createServerFn({ method: "GET" }).hand
         const org = job ? store.organizations.find((o) => o.id === job.organizationId) : null;
         return {
           id: a.id,
+          jobId: a.jobId,
           role: job?.title || "Role",
           company: org?.name || "Organisation",
           stage: a.stage,
@@ -88,3 +119,106 @@ export const getCandidateApplicationsFn = createServerFn({ method: "GET" }).hand
     return formatErrorResponse(error);
   }
 });
+
+export const addCandidateSkillFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => CandidateSkillUpsertSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      const skill = await addCandidateSkill(auth.candidateId, data);
+      return { success: true as const, data: skill };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const removeCandidateSkillFn = createServerFn({ method: "POST" })
+  .validator((data: { skillId: string }) => data)
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      await removeCandidateSkill(auth.candidateId, data.skillId);
+      return { success: true as const };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const addCandidateEducationFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => CandidateEducationCreateSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      const edu = await addCandidateEducation(auth.candidateId, data);
+      return { success: true as const, data: edu };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const getCandidateEducationsFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const auth = await getCandidateAuth();
+    const edus = await getCandidateEducations(auth.candidateId);
+    return { success: true as const, data: edus };
+  } catch (error) {
+    return formatErrorResponse(error);
+  }
+});
+
+export const deleteCandidateEducationFn = createServerFn({ method: "POST" })
+  .validator((data: { educationId: string }) => data)
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      await deleteCandidateEducation(auth.candidateId, data.educationId);
+      return { success: true as const };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const addCandidateExperienceFn = createServerFn({ method: "POST" })
+  .validator((data: unknown) => CandidateExperienceCreateSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      const exp = await addCandidateExperience(auth.candidateId, data);
+      return { success: true as const, data: exp };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const getCandidateExperiencesFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const auth = await getCandidateAuth();
+    const exps = await getCandidateExperiences(auth.candidateId);
+    return { success: true as const, data: exps };
+  } catch (error) {
+    return formatErrorResponse(error);
+  }
+});
+
+export const deleteCandidateExperienceFn = createServerFn({ method: "POST" })
+  .validator((data: { experienceId: string }) => data)
+  .handler(async ({ data }) => {
+    try {
+      const auth = await getCandidateAuth();
+      await deleteCandidateExperience(auth.candidateId, data.experienceId);
+      return { success: true as const };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });
+
+export const searchPublishedJobsFn = createServerFn({ method: "GET" })
+  .validator((data: unknown) => (data ? JobFilterSchema.parse(data) : undefined))
+  .handler(async ({ data }) => {
+    try {
+      const jobs = await searchPublishedJobs(data);
+      return { success: true as const, data: jobs };
+    } catch (error) {
+      return formatErrorResponse(error);
+    }
+  });

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Chips, DataTable, PageHeader, Panel, StatusBadge, toneForStage } from "@/components/lt/kit";
-import { applicationStages, applications } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { getCandidateApplicationsFn, withdrawApplicationFn } from "@/api/candidate";
 
-const tabs = ["All", "Applied", "Under Review", "Shortlisted", "Interview", "Selected", "Rejected"];
+const tabs = ["All", "APPLIED", "SCREENING", "SHORTLISTED", "INTERVIEW", "OFFER", "WITHDRAWN", "REJECTED"];
 
 export const Route = createFileRoute("/app/applications")({
   head: () => ({
@@ -19,50 +22,109 @@ export const Route = createFileRoute("/app/applications")({
 
 function Applications() {
   const [tab, setTab] = useState(tabs[0]!);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+
+  const fetchApps = async () => {
+    try {
+      const res = await getCandidateApplicationsFn();
+      if (res && res.success && Array.isArray(res.data)) {
+        setApplications(res.data);
+      }
+    } catch (err: any) {
+      toast.error("Failed to load applications", { description: err.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApps();
+  }, []);
+
+  const handleWithdraw = async (appId: string) => {
+    setWithdrawingId(appId);
+    try {
+      const res = await withdrawApplicationFn({
+        data: { applicationId: appId, reason: "Candidate initiated withdrawal." },
+      });
+
+      if (res && res.success) {
+        toast.success("Application withdrawn successfully.");
+        await fetchApps();
+      } else {
+        toast.error("Withdrawal failed", { description: (res as any)?.error?.message });
+      }
+    } catch (err: any) {
+      toast.error("Withdrawal failed", { description: err.message });
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
   const rows = applications.filter((a) => tab === "All" || a.stage === tab);
-  const active = applications[0]!;
+  const active = applications[0];
 
   return (
     <div className="space-y-6">
       <PageHeader title="Applications" description="Every application, every stage, in one view." />
       <Chips items={tabs} value={tab} onChange={setTab} />
 
-      <Panel>
-        <p className="text-sm font-bold text-heading">
-          {active.role} · {active.company}
-        </p>
-        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
-          {applicationStages.map((s, i) => {
-            const reached = i <= applicationStages.indexOf(active.stage);
-            return (
-              <div key={s} className="flex flex-1 items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${reached ? "bg-brand" : "bg-border"}`} />
-                  <span className={`text-xs font-semibold ${reached ? "text-navy" : "text-body"}`}>{s}</span>
-                </div>
-                {i < applicationStages.length - 1 && <span className="hidden h-px flex-1 bg-border sm:block" />}
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
-
-      <DataTable
-        columns={["Role", "Company", "Applied", "Last update", "Status"]}
-        rows={rows.map((a) => [
-          <span className="font-semibold text-heading">{a.role}</span>,
-          a.company,
-          a.applied,
-          a.updated,
-          <StatusBadge tone={toneForStage(a.stage)}>{a.stage}</StatusBadge>,
-        ])}
-      />
-
-      {rows.length === 0 && (
-        <Panel className="py-14 text-center">
-          <p className="text-sm font-semibold text-heading">Nothing in this stage yet</p>
-          <p className="mt-1 text-xs text-body">Applications move here as recruiters update your status.</p>
+      {isLoading ? (
+        <Panel className="py-12 text-center text-body">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand" />
+          <p className="mt-2 text-xs">Loading application history...</p>
         </Panel>
+      ) : (
+        <>
+          {active && (
+            <Panel>
+              <p className="text-sm font-bold text-heading">
+                {active.role} · {active.company}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <span className="rounded bg-tint px-2.5 py-1 font-semibold text-brand-strong">
+                  Match Score: {active.matchScore}%
+                </span>
+                <span className="rounded bg-surface px-2.5 py-1 text-body">
+                  Matched Skills: {active.matchedSkills?.join(", ") || "Java, SQL"}
+                </span>
+              </div>
+            </Panel>
+          )}
+
+          <DataTable
+            columns={["Role", "Company", "Applied", "Match", "Status", "Action"]}
+            rows={rows.map((a) => [
+              <span className="font-semibold text-heading">{a.role}</span>,
+              a.company,
+              a.applied,
+              <span className="font-semibold text-brand-strong">{a.matchScore}%</span>,
+              <StatusBadge tone={toneForStage(a.stage)}>{a.stage}</StatusBadge>,
+              a.stage !== "HIRED" && a.stage !== "REJECTED" && a.stage !== "WITHDRAWN" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                  disabled={withdrawingId === a.id}
+                  onClick={() => handleWithdraw(a.id)}
+                >
+                  {withdrawingId === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Withdraw"}
+                </Button>
+              ) : (
+                <span className="text-xs text-body/60">—</span>
+              ),
+            ])}
+          />
+
+          {rows.length === 0 && (
+            <Panel className="py-14 text-center">
+              <p className="text-sm font-semibold text-heading">No applications found</p>
+              <p className="mt-1 text-xs text-body">Explore published jobs to submit candidate applications.</p>
+            </Panel>
+          )}
+        </>
       )}
     </div>
   );
